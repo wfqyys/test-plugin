@@ -12,7 +12,7 @@ export class example extends plugin {
             priority: Number.MIN_SAFE_INTEGER,
             rule: [
                 {
-                    reg: /^[#/]?(原神|genshin impact)(,|，)?(启动|start)(!|！)?$/,
+                    reg: /^[#/]?(原神|genshin impact)(,|，)?(启动|start)(!|！)$/,
                     fnc: "play",
                 },
             ],
@@ -34,11 +34,18 @@ export class example extends plugin {
         )
     }
     async play(e) {
-        let img_url = "https://gchat.qpic.cn/gchatpic_new/0/0-0-283F3872147323082D64D368EB983A5A/0";
-        let text_start = "原神！启动！"
-        let text_end = "都给爷去玩原神！！"
+        let img_url = "https://gchat.qpic.cn/gchatpic_new/0/0-0-26EBB681B605E858ED28A8B0C970D73A/0";
+        let text_start = "原神！启动！\r"
+        let text_end = "\r都给爷去玩原神！！"
+        const file = segment.image(img_url)
         const md = await createMarkdownMessage("", text_start, img_url, text_end);
+        // const md = await createMarkdownMessage(file, text_start, "", text_end);
         const button = this.button;
-        e.reply([md, button]);
+        const msg = [md, button];
+        if (e.self_id == 2854208819) {
+            e.reply(msg);
+        } else {
+            return true;
+        }
     }
 }

@@ -1,4 +1,24 @@
-node_modules/
+# 忽略日志和缓存文件
+logs/*
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp.*
+.history
+
+# 忽略编辑器生成的临时文件和配置文件
 .idea/
-package-lock.json
 .vscode/
+*.sublime-project
+*.sublime-workspace
+
+# 忽略编译输出文件和依赖包
+dist/
+build/
+*.tar.gz
+*.tgz
+node_modules/
+
+config/*.local.*
+config/play.yml

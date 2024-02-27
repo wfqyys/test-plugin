@@ -10,6 +10,7 @@ yarn-error.log*
 # 忽略编辑器生成的临时文件和配置文件
 .idea/
 .vscode/
+package-lock.json
 *.sublime-project
 *.sublime-workspace
 

@@ -1,8 +1,19 @@
 import createMarkdownMessage from '../models/createMarkdownMessage.js';
 import { segment } from 'oicq'
 import plugin from "../../../lib/plugins/plugin.js";
+import yaml from 'js-yaml';
+import path from 'path';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
 
-export class example extends plugin {
+// 加载配置文件
+const __filename = fileURLToPath(import.meta.url);
+const configPath = path.resolve(path.dirname(__filename), '..', 'config', 'play.yml');
+const configData = readFileSync(configPath, 'utf8');
+const config = yaml.load(configData);
+
+
+export class PlayGenshinImpact extends plugin {
     // 构造函数
     constructor() {
         super({
@@ -33,16 +44,30 @@ export class example extends plugin {
             ],
         )
     }
-    async play(e) {
+    //废弃此法，留作纪念
+    async play1(e) {
         let img_url = "https://gchat.qpic.cn/gchatpic_new/0/0-0-26EBB681B605E858ED28A8B0C970D73A/0";
-        let text_start = "原神！启动！\r"
+        let text_start = "## 原神！启动！\r"
         let text_end = "\r都给爷去玩原神！！"
         const file = segment.image(img_url)
         const md = await createMarkdownMessage("", text_start, img_url, text_end);
         // const md = await createMarkdownMessage(file, text_start, "", text_end);
         const button = this.button;
         const msg = [md, button];
-        if (e.self_id == 2854208819) {
+        if (e.self_id == config.bot_id) {
+            e.reply(msg);
+        } else {
+            return true;
+        }
+    }
+    async play(e) {
+        let img_url = "https://gchat.qpic.cn/gchatpic_new/0/0-0-26EBB681B605E858ED28A8B0C970D73A/0";
+        let text_start = "## 原神！启动！\r";
+        let text_end = "\r都给爷去玩原神！！\r> 快把我拉进你的群聊和你一起玩吧！";
+        const img = segment.image(img_url);
+        const button = this.button;
+        const msg = [text_start, img, text_end, button];
+        if (e.self_id == config.bot_id) {
             e.reply(msg);
         } else {
             return true;

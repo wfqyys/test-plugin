@@ -1,0 +1,11 @@
+{
+	"name": "test-plugin",
+	"version": "0.0.1",
+	"author": "yumochen",
+	"description": "Yunzai-Bot/Miao-Yunzai/trss-yunzai插件",
+	"type": "module",
+	"dependencies": {
+		"image-size": "^1.1.1",
+		"axios": "1.3.4"
+	}
+}

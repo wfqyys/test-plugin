@@ -21,5 +21,4 @@ build/
 *.tgz
 node_modules/
 
-config/*.local.*
-config/play.yml
+config/config/*

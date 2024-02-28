@@ -1,48 +1,17 @@
 import createMarkdownMessage from '../models/createMarkdownMessage.js';
+import Config from '../components/Config.js';
 import { segment } from 'oicq'
 import plugin from "../../../lib/plugins/plugin.js";
-import yaml from 'js-yaml';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs/promises';
 import makeConfig from "../../../lib/plugins/config.js"
 import { rulePrefix } from '../models/common.js'
+
+//Bot 配置
 const { config, configSave } = await makeConfig("bot_id",
     {
         permission: "master",
         bot_id: [],
     },
 )
-// async function ensureConfigFileAndLoad() {
-//     const __filename = fileURLToPath(import.meta.url);
-//     const configDir = path.resolve(path.dirname(__filename), '..', 'config');
-//     const configPath = path.join(configDir, 'play.yml');
-
-//     try {
-//         // 检查 play.yml 是否存在
-//         await fs.access(configPath, fs.constants.F_OK);
-
-//         // 加载 play.yml 配置文件
-//         const configData = await fs.readFile(configPath, 'utf8');
-//         const config = yaml.load(configData);
-
-//         // 检查bot_id是否配置
-//         if (!config || !config.bot_id) {
-//             console.log('bot_id is not configured in config/play.yml');
-//         }
-
-//         return config;
-//     } catch (error) {
-//         // 如果文件不存在或bot_id未配置，则创建并写入默认配置
-//         if (error.code === 'ENOENT') {
-//             const defaultConfig = { bot_id: '' };
-//             await fs.writeFile(configPath, yaml.dump(defaultConfig), 'utf8');
-//             return defaultConfig;
-//         } else {
-//             logger.error(error);
-//         }
-//     }
-// }
 
 export class PlayGenshinImpact extends plugin {
     // 构造函数
@@ -57,9 +26,17 @@ export class PlayGenshinImpact extends plugin {
                     reg: /^[#/]?(原神|genshin impact)(,|，)?(启动|start)(!|！)$/,
                     fnc: "play",
                 }, {
-                    reg: /^(test|插件)?设置bot_id:\d+$/,
+                    reg: /^(test)?(插件)?设置bot_id:\d+$/,
                     fnc: "setId",
                     permission: config.permission
+                },
+                {
+                    reg: /^(test)?(插件)?设置id:\d+$/,
+                    fnc: "setConfig",
+                },
+                {
+                    reg: /^(test)(插件)?删除id:\d+$/,
+                    fnc: "delConfig",
                 },
             ],
         });
@@ -77,7 +54,9 @@ export class PlayGenshinImpact extends plugin {
                 { text: "拉Buer进群", link: "https://qun.qq.com/qunpro/robot/qunshare?robot_uin=2854208819&robot_appid=102042175&biz_type=0" },
                 { text: "拉Buer进频道", link: "https://qun.qq.com/qunpro/robot/share?robot_appid=102042175" },
             ],
-        )
+        );
+        this.config = Config;
+        this.config.initialize();
     }
     //废弃此法，留作纪念
     async play1(e) {
@@ -102,7 +81,11 @@ export class PlayGenshinImpact extends plugin {
         const img = segment.image(img_url);
         const button = this.button;
         const msg = [text_start, img, text_end, button];
-        if (e.self_id == config.bot_id) {
+        // 获取配置文件中的 bot_id 数组
+        const botIds = Config.getArrConfigValue('play-config', 'bot_id')
+        const bot_id = parseInt(botIds[0], 10);
+
+        if (e.self_id === bot_id) {
             e.reply(msg);
         } else {
             return true;
@@ -120,6 +103,68 @@ export class PlayGenshinImpact extends plugin {
         await configSave();
         this.reply(`bot_id已成功设置为${botId}，重启后生效`, true);
     }
+    async setConfig() {
+        let Id = this.e.msg.replace(/^(test|插件)?设置id:/, "").trim();
+        Id = parseInt(Id, 10); // 第二个参数10指定了基数为10，即十进制
+        console.log(Id)
 
+        if (!Id) {
+            this.reply('无效的输入格式，请按照“设置id<数字>”的格式输入', true);
+            return;
+        }
+        // 加载配置文件中的 bot_id 数组
+        let currentBotIds = Config.getArrConfigValue('play-config', 'bot_id');
+
+        // 检查 currentBotIds 是否已定义和非空
+        if (currentBotIds === undefined || currentBotIds === null) {
+            this.reply('配置文件中 bot_id 未定义或为空，请检查配置文件', true);
+            return;
+        }
+        // 验证 currentBotIds 是否为数组
+        if (Array.isArray(currentBotIds)) {
+            // 如果配置文件中已有该 ID，则删除
+            if (currentBotIds.includes(Id)) {
+                // 使用 Config.setArr 方法删除 ID
+                currentBotIds = currentBotIds.filter(item => item !== Id);
+                Config.setArr('play-config', 'bot_id', -1, currentBotIds, 'config'); // 注意这里使用 -1 作为索引代表在数组末尾插入整个数组
+                this.reply(`ID已删除，重启后生效，共${currentBotIds.length}个ID`, true);
+            } else {
+                // 如果配置文件中没有该 ID，则添加
+                const configObject = {
+                    bot_id: [
+                        Id,
+                    ],
+                };
+                currentBotIds.push(Id);
+                Config.setArr('play-config', 'bot_id', -1, currentBotIds, 'config'); // 使用 setArr 方法添加 ID
+                // 保存更改到配置文件
+                await this.config.Save('play-config', configObject, 'config');
+                this.reply(`bot_id已成功设置为${Id}，重启后生效,共${currentBotIds.length}个ID`, true);
+            }
+        } else {
+            this.reply('获取到的 bot_id 不是数组，请检查配置文件 play-config.yaml 中的 bot_id 配置项');
+            return;
+        }
+    }
+    async delConfig() {
+        const Id = this.e.msg.replace(/^(test)(插件)?删除id:/, "").trim();
+
+        if (!Id) {
+            this.reply('无效的输入格式，请按照“设置id<数字>”的格式输入', true);
+            return;
+        }
+        // 加载配置文件中的 bot_id 数组
+        let currentBotIds = Config.getArrConfigValue('play-config', 'bot_id');
+
+        // 如果配置文件中已有该 ID，则删除
+        if (currentBotIds.includes(Id)) {
+            // 使用 Config.setArr 方法删除 ID
+            currentBotIds = currentBotIds.filter(item => item !== Id);
+            Config.setArr('play-config', 'bot_id', -1, currentBotIds, 'config'); // 注意这里使用 -1 作为索引代表在数组末尾插入整个数组
+            this.reply(`ID已删除，重启后生效，共${currentBotIds.length}个ID`, true);
+        } else {
+            this.reply("未找到此id")
+        }
+    }
 }
 export default PlayGenshinImpact;

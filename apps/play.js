@@ -23,9 +23,14 @@ export class PlayGenshinImpact extends plugin {
             priority: Number.MIN_SAFE_INTEGER,
             rule: [
                 {
-                    reg: /^[#/]?(原神|genshin impact)(,|，)?(启动|start)(!|！)$/,
+                    reg: /^[#/]?原神(,|，)?启动(!|！)$/,
                     fnc: "play",
-                }, {
+                },
+                {
+                    reg: /^[#/]?genshin impact(,|，)?start(!|！)$/,
+                    fnc: "play1",
+                },
+                {
                     reg: /^(test)?(插件)?设置bot_id:\d+$/,
                     fnc: "setId",
                     permission: config.permission
@@ -61,13 +66,14 @@ export class PlayGenshinImpact extends plugin {
     //废弃此法，留作纪念
     async play1(e) {
         let img_url = "https://gchat.qpic.cn/gchatpic_new/0/0-0-26EBB681B605E858ED28A8B0C970D73A/0";
-        let text_start = "## 原神！启动！\r"
-        let text_end = "\r都给爷去玩原神！！"
-        const file = segment.image(img_url)
-        const md = await createMarkdownMessage("", text_start, img_url, text_end);
-        // const md = await createMarkdownMessage(file, text_start, "", text_end);
+        let text_start = "## 原神！启动！\r";
+        let text_end = "\r > 都给爷去玩原神！！\r快把我拉进你的群聊和你一起玩吧！";
+        const img = segment.image(img_url);
         const button = this.button;
-        const msg = [md, button];
+        // const md = await createMarkdownMessage("", text_start, img_url, text_end);
+        // const md = await createMarkdownMessage(file, text_start, "", text_end);
+        // const msg = [md, button];
+        const msg = [text_start, img, text_end, button];
         if (e.self_id == config.bot_id) {
             e.reply(msg);
         } else {
@@ -81,16 +87,15 @@ export class PlayGenshinImpact extends plugin {
         const img = segment.image(img_url);
         const button = this.button;
         const msg = [text_start, img, text_end, button];
-        // 获取配置文件中的 bot_id 数组
-        const botIds = Config.getArrConfigValue('play-config', 'bot_id')
-        const bot_id = parseInt(botIds[0], 10);
-
-        if (e.self_id === bot_id) {
+        const config = await Config.configData("play-config")
+        if (e.self_id == config.bot_id) {
             e.reply(msg);
         } else {
             return true;
         }
     }
+
+    //配置方法1
     async setId() {
         const botId = this.e.msg.replace(/^(test|插件)?设置bot_id:/, "").trim();
         if (!botId) {
@@ -103,47 +108,32 @@ export class PlayGenshinImpact extends plugin {
         await configSave();
         this.reply(`bot_id已成功设置为${botId}，重启后生效`, true);
     }
+
+    //配置方法2
     async setConfig() {
-        let Id = this.e.msg.replace(/^(test|插件)?设置id:/, "").trim();
-        Id = parseInt(Id, 10); // 第二个参数10指定了基数为10，即十进制
-        console.log(Id)
+        const Id = parseInt(this.e.msg.replace(/^(test|插件)?设置id:/, "").trim(), 10); // parseInt第二个参数10指定了基数为10，即十进
 
         if (!Id) {
             this.reply('无效的输入格式，请按照“设置id<数字>”的格式输入', true);
             return;
         }
-        // 加载配置文件中的 bot_id 数组
-        let currentBotIds = Config.getArrConfigValue('play-config', 'bot_id');
+        const currentBotIds = await Config.configData("play-config")
 
         // 检查 currentBotIds 是否已定义和非空
         if (currentBotIds === undefined || currentBotIds === null) {
             this.reply('配置文件中 bot_id 未定义或为空，请检查配置文件', true);
             return;
         }
-        // 验证 currentBotIds 是否为数组
-        if (Array.isArray(currentBotIds)) {
-            // 如果配置文件中已有该 ID，则删除
-            if (currentBotIds.includes(Id)) {
-                // 使用 Config.setArr 方法删除 ID
-                currentBotIds = currentBotIds.filter(item => item !== Id);
-                Config.setArr('play-config', 'bot_id', -1, currentBotIds, 'config'); // 注意这里使用 -1 作为索引代表在数组末尾插入整个数组
-                this.reply(`ID已删除，重启后生效，共${currentBotIds.length}个ID`, true);
-            } else {
-                // 如果配置文件中没有该 ID，则添加
-                const configObject = {
-                    bot_id: [
-                        Id,
-                    ],
-                };
-                currentBotIds.push(Id);
-                Config.setArr('play-config', 'bot_id', -1, currentBotIds, 'config'); // 使用 setArr 方法添加 ID
-                // 保存更改到配置文件
-                await this.config.Save('play-config', configObject, 'config');
-                this.reply(`bot_id已成功设置为${Id}，重启后生效,共${currentBotIds.length}个ID`, true);
-            }
+        if (currentBotIds === Id) {
+            currentBotIds = currentBotIds.filter(item => item !== Id);
+            Config.reloadConfig("play-config");
+            const ids = await Config.configData("play-config")
+            this.reply(`bot_id:${ids}已删除，重启后生效`, true);
         } else {
-            this.reply('获取到的 bot_id 不是数组，请检查配置文件 play-config.yaml 中的 bot_id 配置项');
-            return;
+            Config.setNumConfig('play-config', 'bot_id', Id, 'config');
+            Config.reloadConfig("play-config");
+            const ids = await Config.configData("play-config")
+            this.reply(`bot_id已成功设置为${Id}，重启后生效`, true);
         }
     }
     async delConfig() {

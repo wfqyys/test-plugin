@@ -52,7 +52,7 @@ class Config {
     loadConfig(type, name) {
         // 使用 JavaScript 内置的 replace 方法替换连续的斜杠（/）为单个斜杠
         let filePath = `${Plugin_Path}/config/${type}/${name}.yaml`.replace(/\/+/, '/');
-        // let filePath = path.join(Plugin_Path, 'config', type, `${name}.yaml`);
+        // let filePath = path.join(Plugin_Path, 'config', `${type}`, `${name}.yaml`);
         let config = YAML.parse(fs.readFileSync(filePath, 'utf8'));
 
         // 可选：这里可以添加文件监听逻辑
@@ -95,7 +95,7 @@ class Config {
    */
     modify(name, key, value, type = 'config') {
         // 移除或避免连续斜杠
-        let filePath = path.join(Plugin_Path, 'config', type, `${name}.yaml`);
+        let filePath = path.join(Plugin_Path, 'config', `${type}`, `${name}.yaml`);
         // 创建 YamlReader 实例并修改配置
         let yamlReader = new YamlReader(filePath);
         yamlReader.set(key, value);
@@ -116,7 +116,7 @@ class Config {
     modifyarr(name, key, value, category = 'add', type = 'config') {
 
         let filePath = `${Plugin_Path}/config/${type}/${name}.yaml`
-        // const filePath = path.join(Plugin_Path, 'config', `type`, `${name}.yaml`);
+        // const filePath = path.join(Plugin_Path, 'config', `${type}`, `${name}.yaml`);
         let yaml = new YamlReader(filePath)
         if (category == 'add') {
             yaml.addIn(key, value)
@@ -127,17 +127,27 @@ class Config {
     }
 
     setArr(name, key, item, value, type = 'config') {
-        const filePath = path.join(Plugin_Path, 'config', type, `${name}.yaml`);
+        const filePath = path.join(Plugin_Path, 'config', `${type}`, `${name}.yaml`);
         let yaml = new YamlReader(filePath);
         let arr = yaml.get(key).slice();
         arr[item] = value;
         yaml.set(key, arr);
         yaml.save(); // 保存更改至文件
     }
-
+    async configData(fileName) {
+        const filePath = path.join(Plugin_Path, 'config', 'config', `${fileName}.yaml`);
+        try {
+            const data = await fs.promises.readFile(filePath, 'utf-8');
+            const config = YAML.parse(data);
+            return config;
+        } catch (err) {
+            console.error(`无法从配置文件中读取数据: ${err}`);
+            throw new Error(err.message);
+        }
+    }
     //获取配置文件值
     getConfigValue(filename, key) {
-        const filePath = path.join(Plugin_Path, 'config', `${filename}.yaml`);
+        const filePath = path.join(Plugin_Path, 'config', 'config', `${filename}.yaml`);
         try {
             // 确保文件存在
             fs.accessSync(filePath, fs.constants.F_OK);
@@ -203,7 +213,7 @@ class Config {
     }
     // 同步写入
     saveConfig(name, configObject, type = 'config') {
-        const filePath = path.join(Plugin_Path, 'config', type, `${name}.yaml`);
+        const filePath = path.join(Plugin_Path, 'config', `${type}`, `${name}.yaml`);
         const yamlContent = YAML.stringify(configObject);
 
         try {
@@ -215,7 +225,8 @@ class Config {
     }
     // 异步写入
     async Save(name, configObject, type = 'config') {
-        const filePath = path.join(Plugin_Path, 'config', type, `${name}.yaml`);
+        // const filePath = `${Plugin_Path}/config/${type}/${name}.yaml`
+        const filePath = path.join(Plugin_Path, 'config', `${type}`, `${name}.yaml`);
         const yamlContent = YAML.stringify(configObject);
 
         return new Promise((resolve, reject) => {
@@ -228,6 +239,18 @@ class Config {
                 }
             });
         });
+    }
+    async setNumConfig(name, key, value, type = 'config') {
+        const configObject = {};
+        configObject[key] = value;
+
+        // 确保 value 是数字类型
+        if (typeof value === 'string') {
+            configObject[key] = parseInt(value, 10);
+        }
+
+        // 更新配置文件
+        await this.Save(name, configObject, type = "config");
     }
 }
 

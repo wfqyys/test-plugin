@@ -1,3 +1,4 @@
+/* eslint-disable no-this-before-super */
 /* eslint-disable space-before-function-paren */
 /* eslint-disable no-undef */
 /* eslint-disable camelcase */
@@ -9,6 +10,7 @@ import axios from 'axios'
 
 export class guessSaying extends plugin {
     constructor() {
+        this.startGame = this.startGame.bind(this)
         super({
             name: '看图猜成语',
             dsc: '看图猜成语',
@@ -24,21 +26,22 @@ export class guessSaying extends plugin {
                     fnc: 'guess'
                 }
             ],
-            currentQuestions: {} // 改为一个对象存储不同群组的当前问题
+            currentQuestions: new Map() // 改为一个对象存储不同群组的当前问题
         })
     }
 
-    async startGame(e) {
+    async startGame() {
         try {
-            const groupId = e.group_id
+            const groupId = this.e.group_id
+            this.reply(groupId)
             const response = await axios.get('http://api.yujn.cn/api/caicy.php?')
             const data = await response.data
 
             if (data.code === 200) {
-                this.currentQuestions[groupId] = {
+                this.currentQuestions.set(groupId, {
                     daan: data.daan,
                     imageUrl: data.img
-                }
+                })
                 const img = segment.image(data.img)
                 const text_start = '# 开始看图猜成语\r'
                 const text = '请根据以下图片猜成语:\r'
@@ -63,19 +66,19 @@ export class guessSaying extends plugin {
                 )
 
                 const msg = [text_start, text, img, Cbutton]
-                e.reply(msg)
+                this.reply(msg)
             } else {
                 console.error(
                     `在群 ${groupId} 获取题目时发生错误:`,
                     data.message || '未知错误'
                 )
                 // 可以在这里添加回复用户一条错误信息的消息
-                e.reply('抱歉，获取题目时出错，请稍后再试。') // 添加错误提示消息
+                this.reply('抱歉，获取题目时出错，请稍后再试。') // 添加错误提示消息
             }
         } catch (error) {
-            console.error(`在群 ${e.group_id} 请求过程中发生错误:`, error)
+            console.error(`在群 ${this.e.group_id} 请求过程中发生错误:`, error)
             // 可以在这里添加回复用户一条网络错误的信息
-            e.reply('抱歉，网络请求出现问题，请稍后再试。') // 添加网络错误提示消息
+            this.e.reply('抱歉，网络请求出现问题，请稍后再试。') // 添加网络错误提示消息
         }
     }
 

@@ -10,7 +10,6 @@ import axios from 'axios'
 
 export class guessSaying extends plugin {
     constructor() {
-        this.startGame = this.startGame.bind(this)
         super({
             name: '看图猜成语',
             dsc: '看图猜成语',
@@ -28,6 +27,7 @@ export class guessSaying extends plugin {
             ],
             currentQuestions: new Map() // 改为一个对象存储不同群组的当前问题
         })
+        this.startGame = this.startGame.bind(this)
     }
 
     async startGame() {

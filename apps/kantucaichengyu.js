@@ -138,7 +138,9 @@ export class guessSaying extends plugin {
             userAnswer.toLowerCase() ===
             this.currentQuestions.get(groupId)?.daan.toLowerCase()
         ) {
-            e.reply(`答对了！成语是：${this.currentQuestions.get(groupId)?.daan}`)
+            const text = `恭喜你，答对了！答案是：${this.currentQuestions.get(groupId)?.daan}`
+            const msg = [text, btn]
+            e.reply(msg)
             this.currentQuestions.delete(groupId) // 移除已解答的问题
         } else {
             const text = `很遗憾，答错了。正确答案是：${this.currentQuestions.get(groupId)?.daan}`

@@ -19,6 +19,10 @@ export class guessSaying extends plugin {
                 {
                     reg: /^([#/]?猜.*)$/,
                     fnc: 'guess'
+                },
+                {
+                    reg: /^([#/]?看答案)$/,
+                    fnc: 'lookDaan'
                 }
             ]
         })
@@ -117,8 +121,12 @@ export class guessSaying extends plugin {
         const btn = segment.button(
             [
                 {
-                    text: '再来一题',
-                    input: '/开始看图猜成语',
+                    text: '猜错了，再猜一次',
+                    input: '/猜',
+                },
+                {
+                    text: '看答案',
+                    input: '/看答案',
                     send: true
                 }
             ],
@@ -139,13 +147,39 @@ export class guessSaying extends plugin {
             this.currentQuestions.get(groupId)?.daan.toLowerCase()
         ) {
             const text = `恭喜你，答对了！答案是：${this.currentQuestions.get(groupId)?.daan}`
-            const msg = [text, btn]
+            const img = segment.image(this.currentQuestions.get(groupId)?.imgUrl)
+            const msg = [img, text, btn]
             e.reply(msg)
-            this.currentQuestions.delete(groupId) // 移除已解答的问题
+            this.currentQuestions.delete(groupId)
         } else {
-            const text = `很遗憾，答错了。正确答案是：${this.currentQuestions.get(groupId)?.daan}`
+            const text = `很遗憾，答案不是“${userAnswer}”哦~再好好想想吧~`
             const msg = [text, btn]
             e.reply(msg)
         }
+    }
+    async lookDaan(e) {
+        const btn = segment.button(
+            [
+                {
+                    text: '再来一题',
+                    input: '/开始看图猜成语',
+                    send: true
+                }
+            ],
+            [
+                {
+                    text: '拉Buer进群',
+                    link: 'https://qun.qq.com/qunpro/robot/qunshare?robot_uin=2854208819&robot_appid=102042175&biz_type=0'
+                },
+                {
+                    text: '拉Buer进频道',
+                    link: 'https://qun.qq.com/qunpro/robot/share?robot_appid=102042175'
+                }
+            ]
+        )
+        const daan = `答案是：${this.currentQuestions.get(e.group_id)?.daan}`
+        const msg = [segment.image(this.currentQuestions.get(e.group_id)?.imageUrl), daan, btn]
+        e.reply(msg)
+        this.currentQuestions.delete(groupId)
     }
 }

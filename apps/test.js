@@ -15,13 +15,22 @@ export class GuessIdiom extends plugin {
                 {
                     reg: /^([#/]?获取当前群号)$/,
                     fnc: 'groupNumber'
+                },
+                {
+                    reg: /^([#/]?(小姐姐|xjj)视频)$/,
+                    fnc: 'video'
                 }
-            ]// 改为一个对象存储不同群组的当前问题
+            ]
+
         })
     }
 
     async groupNumber(e) {
         const id = e.group_id
         e.reply(typeof id)
+    }
+    async video(e) {
+        const video_url = "http://api.yujn.cn/api/zzxjj.php"
+        e.reply(["这是你要的视频", segment.video(video_url)])
     }
 }

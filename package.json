@@ -1,6 +1,6 @@
 {
 	"name": "test-plugin",
-	"version": "0.0.1",
+	"version": "0.0.3",
 	"author": "yumochen",
 	"description": "Yunzai-Bot/Miao-Yunzai/trss-yunzai插件",
 	"type": "module",

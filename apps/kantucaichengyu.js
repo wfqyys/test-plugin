@@ -1,9 +1,89 @@
+/* eslint-disable indent */
 import { segment } from 'oicq'
 import plugin from '../../../lib/plugins/plugin.js'
 import axios from 'axios'
 
 const currentQuestions = new Map()
 
+const Cbutton = segment.button(
+    [
+        {
+            text: '猜',
+            input: '/猜'
+        }
+    ],
+    [
+        {
+            text: '拉Buer进群',
+            link: 'https://qun.qq.com/qunpro/robot/qunshare?robot_uin=2854208819&robot_appid=102042175&biz_type=0'
+        },
+        {
+            text: '拉Buer进频道',
+            link: 'https://qun.qq.com/qunpro/robot/share?robot_appid=102042175'
+        }
+    ]
+)
+const Lbtn = segment.button(
+    [
+        {
+            text: '再来一题',
+            input: '/开始看图猜成语',
+            send: true
+        }
+    ],
+    [
+        {
+            text: '拉Buer进群',
+            link: 'https://qun.qq.com/qunpro/robot/qunshare?robot_uin=2854208819&robot_appid=102042175&biz_type=0'
+        },
+        {
+            text: '拉Buer进频道',
+            link: 'https://qun.qq.com/qunpro/robot/share?robot_appid=102042175'
+        }
+    ]
+)
+let btn = segment.button(
+    [
+        {
+            text: '猜错了，再猜一次',
+            input: '/猜'
+        },
+        {
+            text: '看答案',
+            input: '/看答案',
+            send: true
+        }
+    ],
+    [
+        {
+            text: '拉Buer进群',
+            link: 'https://qun.qq.com/qunpro/robot/qunshare?robot_uin=2854208819&robot_appid=102042175&biz_type=0'
+        },
+        {
+            text: '拉Buer进频道',
+            link: 'https://qun.qq.com/qunpro/robot/share?robot_appid=102042175'
+        }
+    ]
+)
+let btn1 = segment.button(
+    [
+        {
+            text: '开始游戏',
+            input: '/开始看图猜成语',
+            send: true
+        }
+    ],
+    [
+        {
+            text: '拉Buer进群',
+            link: 'https://qun.qq.com/qunpro/robot/qunshare?robot_uin=2854208819&robot_appid=102042175&biz_type=0'
+        },
+        {
+            text: '拉Buer进频道',
+            link: 'https://qun.qq.com/qunpro/robot/share?robot_appid=102042175'
+        }
+    ]
+)
 export class guessSaying extends plugin {
     constructor() {
         super({
@@ -40,38 +120,24 @@ export class guessSaying extends plugin {
                 this.reply('无法获取群组ID，请确保在群聊内发送指令')
                 return
             }
-            const response = await axios.get('http://api.yujn.cn/api/caicy.php?')
+            // const api = ''http://api.yujn.cn/api/caicy.php?''
+            const api = `https://xiaoapi.cn/API/game_ktccy.php?msg=%E5%BC%80%E5%A7%8B%E6%B8%B8%E6%88%8F&id=${groupId}`
+            const response = await axios.get(api)
             const data = await response.data
 
             if (data.code === 200) {
                 this.currentQuestions.set(groupId, {
-                    daan: data.daan,
-                    imageUrl: data.img
+                    // daan: data.daan,
+                    // imageUrl: data.img
+                    daan: data.data.answer,
+                    imageUrl: data.data.pic
                 })
-                const img = segment.image(data.img)
-                const text_start = '# 开始看图猜成语\r'
+                // const img = segment.image(data.img)
+                const img = segment.image(data.data.pic)
+                const textStart = '# 开始看图猜成语\r'
                 const text = '请根据以下图片猜成语:\r'
 
-                const Cbutton = segment.button(
-                    [
-                        {
-                            text: '猜',
-                            input: '/猜'
-                        }
-                    ],
-                    [
-                        {
-                            text: '拉Buer进群',
-                            link: 'https://qun.qq.com/qunpro/robot/qunshare?robot_uin=2854208819&robot_appid=102042175&biz_type=0'
-                        },
-                        {
-                            text: '拉Buer进频道',
-                            link: 'https://qun.qq.com/qunpro/robot/share?robot_appid=102042175'
-                        }
-                    ]
-                )
-
-                const msg = [text_start, text, img, Cbutton]
+                const msg = [textStart, text, img, Cbutton]
                 this.reply(msg)
             } else {
                 console.error(
@@ -91,25 +157,6 @@ export class guessSaying extends plugin {
     async guess(e) {
         const groupId = e.group_id
         const text1 = `群 ${groupId} 还没有开始新的猜成语游戏，请先输入“猜图猜成语”开始游戏。`
-        const btn1 = segment.button(
-            [
-                {
-                    text: '开始游戏',
-                    input: '/开始看图猜成语',
-                    send: true
-                }
-            ],
-            [
-                {
-                    text: '拉Buer进群',
-                    link: 'https://qun.qq.com/qunpro/robot/qunshare?robot_uin=2854208819&robot_appid=102042175&biz_type=0'
-                },
-                {
-                    text: '拉Buer进频道',
-                    link: 'https://qun.qq.com/qunpro/robot/share?robot_appid=102042175'
-                }
-            ]
-        )
 
         if (!this.currentQuestions.has(groupId)) {
             const msg = [text1, btn1]
@@ -118,29 +165,6 @@ export class guessSaying extends plugin {
         }
 
         const userAnswer = e.msg.replace(/^([#/]?猜)/, '').trim()
-        const btn = segment.button(
-            [
-                {
-                    text: '猜错了，再猜一次',
-                    input: '/猜',
-                },
-                {
-                    text: '看答案',
-                    input: '/看答案',
-                    send: true
-                }
-            ],
-            [
-                {
-                    text: '拉Buer进群',
-                    link: 'https://qun.qq.com/qunpro/robot/qunshare?robot_uin=2854208819&robot_appid=102042175&biz_type=0'
-                },
-                {
-                    text: '拉Buer进频道',
-                    link: 'https://qun.qq.com/qunpro/robot/share?robot_appid=102042175'
-                }
-            ]
-        )
 
         if (
             userAnswer.toLowerCase() ===
@@ -157,29 +181,18 @@ export class guessSaying extends plugin {
             e.reply(msg)
         }
     }
+
     async lookDaan(e) {
-        const btn = segment.button(
-            [
-                {
-                    text: '再来一题',
-                    input: '/开始看图猜成语',
-                    send: true
-                }
-            ],
-            [
-                {
-                    text: '拉Buer进群',
-                    link: 'https://qun.qq.com/qunpro/robot/qunshare?robot_uin=2854208819&robot_appid=102042175&biz_type=0'
-                },
-                {
-                    text: '拉Buer进频道',
-                    link: 'https://qun.qq.com/qunpro/robot/share?robot_appid=102042175'
-                }
-            ]
-        )
+        const groupId = e.group_id
         const daan = `答案是：${this.currentQuestions.get(e.group_id)?.daan}`
-        const msg = [segment.image(this.currentQuestions.get(e.group_id)?.imageUrl), daan, btn]
-        e.reply(msg)
-        this.currentQuestions.delete(groupId)
+        const text1 = `群 ${groupId} 还没有开始新的猜成语游戏，请先输入“猜图猜成语”开始游戏。`
+        if (!this.currentQuestions.has(groupId)) {
+            const msg = [text1, btn1]
+            e.reply(msg)
+        } else {
+            const questionMsg = [segment.image(this.currentQuestions.get(e.group_id)?.imageUrl), daan, Lbtn]
+            e.reply(questionMsg)
+            this.currentQuestions.delete(groupId)
+        }
     }
 }
